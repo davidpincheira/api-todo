@@ -1,11 +1,22 @@
 const { Product } = require('../models/index')
 
 module.exports = {
-    async getProductById (req, res){
+    async getOneProduct (req, res){
         try {
             const result = await Product.findByPk(req.params.id)
-            res.send(result)
+            let imagesArray;
+            try {
+                imagesArray = JSON.parse(result.images);
+            } catch (error) {
+                // Si no se puede parsear como JSON, asumir que es una sola URL y convertirlo en un array
+                imagesArray = [result.images];
+            }
+            const formattedResult = {
+                ...result.toJSON(),
+                images: imagesArray
+            };
             
+            res.send(formattedResult);
         } catch (err) {
             res.status(500).send({
                 message: err.message || "Un error ocurrio mientra se hacia el pedido del producto."
@@ -18,12 +29,62 @@ module.exports = {
             const offset = req.query.offset==null ? 0 : parseInt(req.query.offset, 10);
             const limit = req.query.limit==null ? 10 : parseInt(req.query.limit, 10);
 
-            const product = await Product.findAll({offset, limit});            
+            const product = await Product.findAll({offset, limit});    
 
-            res.send(product);
+            // Formatear el campo images de cada producto
+            const productsFormatted = product.map(prod => {
+                // Verificar si product.images es una cadena JSON válida
+                let imagesArray;
+                try {
+                    imagesArray = JSON.parse(prod.images);
+                } catch (error) {
+                    // Si no se puede parsear como JSON, asumir que es una sola URL y convertirlo en un array
+                    imagesArray = [prod.images];
+                }                
+                // Retornar el producto con el campo images formateado
+                return {
+                    ...prod.toJSON(),
+                    images: imagesArray
+                };
+            });               
+
+            res.send(productsFormatted);
         } catch (err) {
             res.status(500).send({
                 message: err.message || "Un error ocurrio mientras se traian los productos"
+            })
+        }
+    },
+    //get products filtered by categoryId   
+    async getProductsByCategoryId(req, res){
+        try {
+            const id = req.params.id;
+
+            const productsByCat =await Product.findAll({where:{categoryId:id}}); 
+            
+            // Formatear el campo images de cada producto
+            const productsFormatted = productsByCat.map(prod => {
+                // Verificar si product.images es una cadena JSON válida
+                let imagesArray;
+                try {
+                    imagesArray = JSON.parse(prod.images);
+                } catch (error) {
+                    // Si no se puede parsear como JSON, asumir que es una sola URL y convertirlo en un array
+                    imagesArray = [prod.images];
+                }                
+                // Retornar el producto con el campo images formateado
+                return {
+                    ...prod.toJSON(),
+                    images: imagesArray
+                };
+            }); 
+            if(!productsFormatted){
+              return res.status(404).send({message:"No hay productos relacionados a esa categoria."})
+            }           
+            res.send(productsFormatted);
+        } catch (err) {
+            res.status(500).send({
+                message: err.message || "Un error ocurrio mientra se hacia el pedido del producto."
             })
         }
     },

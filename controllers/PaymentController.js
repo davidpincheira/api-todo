@@ -1,18 +1,37 @@
-const { Order } = require('../models/index')
+const { Payment } = require('../models/index')
 
 module.exports = {
-    async getOrderDetailById (req, res){
+    async receivePayment (req, res){
         try {
-            const result = await Order.findByPk(req.params.id)
-            res.send(result)
-            
+
+            console.log(req.body.cardDetails)
+            const { cardName, cardNumber, expiryDate, cvv } = req.body.cardDetails;
+
+            if (!cardName || !cardNumber || !expiryDate || !cvv) {
+                res.status(400).send({
+                  message: "El contenido no puede estar vacio!"
+                });
+                return;
+            }
+
+            const data = await Payment.create({
+                cardName,
+                cardNumber,
+                expiryDate,
+                cvv
+            });
+
+            res.status(201).json({
+                message: "Payment made!",
+                result: data
+            });
         } catch (err) {
             res.status(500).send({
-                message: err.message || "Un error ocurrio mientra se hacia el pedido del producto."
+                message: err.message || "Un error ocurrio mientras se creaba el producto."
             })
         }
     },
-    async getOrderDetails (req, res){
+    /* async getOrderDetails (req, res){
         try {
             const orderdetail = await OrderDetail.findAll();
 
@@ -51,38 +70,6 @@ module.exports = {
                 message: err.message || "Un error ocurrio mientras se creaba el producto."
             })
         }
-    },
-    async updateOrderDetail (req, res){
-        try {
-            await OrderDetail.update(req.body, {
-                where: {
-                    id: req.params.id
-                }
-            });
-            res.json({
-                "message": "OrderDetail Actualizado"
-            });
-        } catch (err) {
-            res.status(500).send({
-                message: err.message || "Un error ocurrio mientra se actualizaba el producto."
-            })
-        }
-    },
-    async deleteOrderDetail (req, res){
-        try {
-            await OrderDetail.destroy(req.body, {
-                where: {
-                    id: req.params.id
-                }
-            });
-            res.json({
-                "message": "OrderDetail Eliminado"
-            });
-        } catch (err) {
-            res.status(500).send({
-                message: err.message || "Un error ocurrio mientra se eliminaba el producto."
-            })
-        }
-    }    
+    } */
 
 }

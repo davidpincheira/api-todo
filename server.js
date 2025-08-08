@@ -19,7 +19,7 @@ app.use(routes)
 app.listen(PORT, function (){
     console.log('server running')
     sequelize.authenticate().then(()=>{
-        console.log('conectado a la base de datos')
+        console.log('conectado a la base de datos', 'puerto ' + PORT)
     })
 
     //sequelize.sync({force: true})
